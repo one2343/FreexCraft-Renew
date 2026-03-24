@@ -14,6 +14,16 @@ jobs:
       - name: 📥 检出代码
         uses: actions/checkout@v4
 
+      - name: 📥 拉取私库脚本
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/FreexCraft-Renew-Private
+          token: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          path: private
+
+      - name: 📂 移动脚本到工作目录
+        run: mv private/freexcraft_renew.sh freexcraft_renew.sh
+
       - name: 🛡️ 启动 GOST 代理转发
         if: ${{ env.GOST_PROXY != '' }}
         env:
