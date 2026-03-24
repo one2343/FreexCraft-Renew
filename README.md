@@ -49,4 +49,4 @@ https://freexcraft.com/dashboard/server/f59428a5-ead9-4cd1-b34e-c67fb5a1396c
 4. 在请求 **Headers** 中找到 `apikey` 字段，其值即为 `SUPABASE_ANON_KEY`
 5. 该请求的域名部分（如 `https://aeilbxxjgrnnqmtwnesh.supabase.co`）即为 `SUPABASE_URL`
 
-> 通常这两个值不会变动，仅在 FreeXCraft 迁移 Supabase 项目时才需要更新。
+> 通常这两个值不会变动，仅在 FreeXCraft 迁移 Supabase 项目时才需要更新。这两个值为 FreeXCraft 网站公共配置，所有用户一致，无需自行获取。
