@@ -3,7 +3,12 @@ name: FreeXCraft 续期
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */3 * * *'   # 每3小时执行一次
+    - cron: '0 */3 * * *'
+
+# 必须添加 write 权限才能删除 workflow 运行记录
+permissions:
+  actions: write
+  contents: read
 
 jobs:
   renew:
@@ -22,7 +27,9 @@ jobs:
           path: private
 
       - name: 📂 移动脚本到工作目录
-        run: mv private/freexcraft_renew.sh freexcraft_renew.sh
+        run: |
+          mv private/freexcraft_renew.sh freexcraft_renew.sh
+          chmod +x freexcraft_renew.sh
 
       - name: 🛡️ 启动 GOST 代理转发
         if: ${{ env.GOST_PROXY != '' }}
@@ -30,14 +37,11 @@ jobs:
           GOST_PROXY: ${{ secrets.GOST_PROXY }}
         run: |
           VERSION=$(curl -s https://api.github.com/repos/ginuerzh/gost/releases/latest | grep '"tag_name"' | cut -d'"' -f4 | tr -d 'v')
-          echo "📦 GOST 版本: $VERSION"
           wget -q "https://github.com/ginuerzh/gost/releases/download/v${VERSION}/gost_${VERSION}_linux_amd64.tar.gz"
           tar -xzf "gost_${VERSION}_linux_amd64.tar.gz"
           chmod +x gost
           nohup ./gost -L http://:8080 -F "$GOST_PROXY" > gost.log 2>&1 &
           sleep 3
-          echo "✅ GOST 已启动，测试连通性..."
-          curl -s -x http://127.0.0.1:8080 https://api.ipify.org | sed 's/\.[0-9]*$/.**/' && echo
 
       - name: 🔧 执行续期
         env:
@@ -45,3 +49,18 @@ jobs:
           GOST_PROXY: ${{ secrets.GOST_PROXY }}
           TG_BOT: ${{ secrets.TG_BOT }}
         run: bash freexcraft_renew.sh
+
+      - name: 🧹 清理历史运行记录 (保留最近3次)
+        if: always() # 无论成功失败都执行清理
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 获取当前 workflow 的所有运行 ID，跳过最新的 3 个，删除其余的
+          echo "开始清理旧的运行记录..."
+          gh run list --workflow="${{ github.workflow }}" --limit 100 --json databaseId -q '.[3:][].databaseId' | while read id; do
+            if [ -n "$id" ]; then
+              gh run delete "$id" || true
+              echo "已删除记录 ID: $id"
+            fi
+          done
+          echo "清理完成！"
