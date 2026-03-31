@@ -5,7 +5,6 @@ on:
   schedule:
     - cron: '0 */3 * * *'
 
-# 必须添加 write 权限才能删除 workflow 运行记录
 permissions:
   actions: write
   contents: read
@@ -58,7 +57,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 获取当前 workflow 的所有运行 ID，跳过最新的 3 个，删除其余的
           echo "开始清理旧的运行记录..."
           gh run list --workflow="${{ github.workflow }}" --limit 100 --json databaseId -q '.[3:][].databaseId' | while read id; do
             if [ -n "$id" ]; then
